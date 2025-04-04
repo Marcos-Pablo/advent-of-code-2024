@@ -1,3 +1,4 @@
+from pathlib import Path
 from collections import Counter
 
 def solve_part_one(left_list, right_list):
@@ -17,8 +18,10 @@ def solve_part_two(left_list, right_list):
     return similarity_score
 
 def process_input():
+    script_dir = Path(__file__).parent
+    input_path = script_dir / "input.txt"
     left_list, right_list = [], []
-    with open("./input.txt", "r") as file:
+    with open(input_path.resolve(), "r") as file:
         for line in file:
             left_id, right_id = line.split()
             left_list.append(int(left_id))
