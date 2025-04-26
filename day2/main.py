@@ -10,7 +10,6 @@ def process_input():
             for level in line.split():
                 report.append(int(level))
             reports.append(report)
-
     return reports
 
 def is_report_safe(report):
@@ -19,7 +18,6 @@ def is_report_safe(report):
         prev_level = report[i - 1]
         curr_level = report[i]
         level_diff = abs(curr_level - prev_level)
-
         if (
             prev_level == curr_level or 
             level_diff > 3 or 
@@ -27,44 +25,26 @@ def is_report_safe(report):
             (not is_increasing and prev_level < curr_level)
         ):
             return False
-
     return True
 
-def is_report_safe_removing_one_level(report, can_remove_level = True):
-    is_increasing = True if report[0] < report[1] else False
-    for i in range(1, len(report)):
-        prev_level = report[i - 1]
-        curr_level = report[i]
-        level_diff = abs(curr_level - prev_level)
+def is_report_safe_removing_one_level(report):
+    if is_report_safe(report):
+        return True
 
-        if (
-            prev_level == curr_level or 
-            level_diff > 3 or 
-            (is_increasing and prev_level > curr_level) or
-            (not is_increasing and prev_level < curr_level)
-        ):
-
-            if can_remove_level:
-                for j in range(len(report)):
-                    if is_report_safe(report[:j] + report[j + 1:]):
-                        return True
-            return False
-
-    return True
+    for i in range(len(report)):
+        if is_report_safe(report[:i] + report[i + 1:]):
+            return True
+    return False
 
 def count_safe_reports(reports):
     safe_reports = 0
     safe_reports_removing_at_most_one_level = 0
-
     for report in reports:
-
         if is_report_safe(report):
             safe_reports += 1
             safe_reports_removing_at_most_one_level += 1
-
         elif is_report_safe_removing_one_level(report):
             safe_reports_removing_at_most_one_level += 1
-            print(report)
 
     return safe_reports, safe_reports_removing_at_most_one_level
 
