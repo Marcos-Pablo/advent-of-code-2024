@@ -51,7 +51,7 @@ def count_safe_reports(reports):
 def main():
     reports = process_input()
     safe_reports, safe_reports_removing_at_most_one_level = count_safe_reports(reports)
-    print(f"Amount of safe reports -> {safe_reports}")
-    print(f"Amount of safe reports removing at most one level-> {safe_reports_removing_at_most_one_level}")
+    print(f"Number of safe reports -> {safe_reports}")
+    print(f"Number of safe reports removing at most one level-> {safe_reports_removing_at_most_one_level}")
 
 main()
