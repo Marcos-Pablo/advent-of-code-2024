@@ -35,15 +35,46 @@ def get_next_non_empty_pos_right_to_left(disk_map, j):
         j -= 1
     return j
 
+def get_next_empty_size_window(disk_map, i, size = 1):
+    start = i + 1
+    end = start
+    while start < len(disk_map):
+        if disk_map[start] != ".":
+            start += 1
+            continue
+
+        end = start
+        while (
+            end - start + 1 < size and
+            end + 1 < len(disk_map) and 
+            disk_map[end + 1] == "."
+        ):
+            end += 1
+
+        if end - start + 1 == size:
+            break
+        else:
+            start = end + 1
+
+    return start, end
+
+def get_next_file_window(disk_map, j):
+    end = j - 1
+    while end >= 0 and disk_map[end] == ".":
+        end -= 1
+    start = end
+    while start - 1 >= 0 and disk_map[start - 1] == disk_map[end]:
+        start -= 1
+    return start, end
+
 def calculate_checksum(disk_map):
-    i = 0
     checksum = 0
-    while i < len(disk_map) and disk_map[i] != ".":
-        checksum += i * disk_map[i]
-        i += 1
+    for i in range(len(disk_map)):
+        if disk_map[i] != ".":
+            checksum += disk_map[i] * i
     return checksum
 
-def fragment_disk(disk_map):
+def fragment_disk_strategy1(disk_map):
     i = get_next_empty_pos_left_to_right(disk_map, -1)
     j = get_next_non_empty_pos_right_to_left(disk_map, len(disk_map))
     while i < j:
@@ -51,20 +82,36 @@ def fragment_disk(disk_map):
         i = get_next_empty_pos_left_to_right(disk_map, i)
         j = get_next_non_empty_pos_right_to_left(disk_map, j)
 
+def fragment_disk_strategy2(disk_map):
+    start, end = get_next_file_window(disk_map, len(disk_map))
+    while start >= 0:
+        size = end - start + 1
+        empty_window_start, empty_window_end = get_next_empty_size_window(disk_map, -1, size)
+        if start > empty_window_end:
+            disk_map[empty_window_start:empty_window_end + 1], disk_map[start:end + 1] = (
+                disk_map[start:end + 1], disk_map[empty_window_start:empty_window_end + 1]
+            )
+        start, end = get_next_file_window(disk_map, start)
+
 def main():
     start = time.perf_counter()
     tracemalloc.start()
 
     disk_map = extract_disk_map()
-    fragment_disk(disk_map)
-    checksum = calculate_checksum(disk_map)
+    disk_map_copy = disk_map.copy()
+
+    fragment_disk_strategy1(disk_map)
+    checksumstrategy1 = calculate_checksum(disk_map)
+
+    fragment_disk_strategy2(disk_map_copy)
+    checksumstrategy2 = calculate_checksum(disk_map_copy)
 
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
     end = time.perf_counter()
 
-    print(f"Part 1 response: {checksum}")
-    print(f"Part 2 response: ")
+    print(f"Part 1 response: {checksumstrategy1}")
+    print(f"Part 2 response: {checksumstrategy2}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
 
