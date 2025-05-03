@@ -45,29 +45,6 @@ def get_next_non_empty_pos_right_to_left(disk_map, j):
         j -= 1
     return j
 
-def get_next_empty_size_window(disk_map, i, size = 1):
-    start = i + 1
-    end = start
-    while start < len(disk_map):
-        if disk_map[start] != ".":
-            start += 1
-            continue
-
-        end = start
-        while (
-            end - start + 1 < size and
-            end + 1 < len(disk_map) and 
-            disk_map[end + 1] == "."
-        ):
-            end += 1
-
-        if end - start + 1 == size:
-            break
-        else:
-            start = end + 1
-
-    return start, end
-
 def calculate_checksum(disk_map):
     checksum = 0
     for i in range(len(disk_map)):
