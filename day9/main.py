@@ -58,15 +58,6 @@ def get_next_empty_size_window(disk_map, i, size = 1):
 
     return start, end
 
-def get_next_file_window(disk_map, j):
-    end = j - 1
-    while end >= 0 and disk_map[end] == ".":
-        end -= 1
-    start = end
-    while start - 1 >= 0 and disk_map[start - 1] == disk_map[end]:
-        start -= 1
-    return start, end
-
 def calculate_checksum(disk_map):
     checksum = 0
     for i in range(len(disk_map)):
@@ -83,15 +74,27 @@ def fragment_disk_strategy1(disk_map):
         j = get_next_non_empty_pos_right_to_left(disk_map, j)
 
 def fragment_disk_strategy2(disk_map):
-    start, end = get_next_file_window(disk_map, len(disk_map))
-    while start >= 0:
-        size = end - start + 1
-        empty_window_start, empty_window_end = get_next_empty_size_window(disk_map, -1, size)
-        if start > empty_window_end:
-            disk_map[empty_window_start:empty_window_end + 1], disk_map[start:end + 1] = (
-                disk_map[start:end + 1], disk_map[empty_window_start:empty_window_end + 1]
+    files = []
+    start = 0
+    while start < len(disk_map):
+        end = start
+        while end + 1 < len(disk_map) and disk_map[end] == disk_map[end + 1]:
+            end += 1
+        
+        id = disk_map[start]
+        if id != ".":
+            size = end - start + 1
+            files.append((id, start, size))
+        start = end + 1
+
+    while files:
+        id, start, size = files.pop()
+        end = start + size - 1
+        empty_w_start, empty_w_end = get_next_empty_size_window(disk_map, -1, size)
+        if empty_w_end < start:
+            disk_map[empty_w_start:empty_w_end + 1], disk_map[start:end + 1] = (
+                disk_map[start:end + 1], disk_map[empty_w_start:empty_w_end + 1]
             )
-        start, end = get_next_file_window(disk_map, start)
 
 def main():
     start = time.perf_counter()
