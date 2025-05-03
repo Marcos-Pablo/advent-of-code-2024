@@ -79,12 +79,11 @@ def fragment_disk_strategy2(disk_map, files, empty_spaces):
     while files:
         start, size = files.pop()
         end = start + size - 1
-        empty_space_start = get_next_empty_space_by_size(empty_spaces, size)
+        empty_w_start = get_next_empty_space_by_size(empty_spaces, size)
 
-        if empty_space_start == None:
+        if empty_w_start == None:
             continue
 
-        empty_w_start = empty_space_start
         empty_w_end = empty_w_start + size - 1
         if empty_w_end < start:
             disk_map[empty_w_start:empty_w_end + 1], disk_map[start:end + 1] = (
