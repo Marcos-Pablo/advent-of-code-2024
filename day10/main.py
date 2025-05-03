@@ -21,26 +21,32 @@ def calc_scores(map, trailheads):
     moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
     n, m = len(map), len(map[0])
     def calc_score(i, j, visited):
-        visited.add((i, j))
         if map[i][j] == 9:
-            return 1
+            score = 1 if (i, j) not in visited else 0
+            visited.add((i, j))
+            return score, 1
 
         height = map[i][j]
-        res = 0
+        total_score = 0
+        total_rating = 0
         for m1, m2 in moves:
             new_row, new_col = i + m1, j + m2
             if (
                 0 <= new_row < n and 
                 0 <= new_col < m and
                 map[new_row][new_col] == height + 1
-                and (new_row, new_col) not in visited
             ):
-                res += calc_score(new_row, new_col, visited)
-        return res
-    scores = 0
+                score, rating = calc_score(new_row, new_col, visited)
+                total_score += score
+                total_rating += rating
+        return total_score, total_rating
+    total_score = 0
+    total_rating = 0
     for i, j in trailheads:
-        scores += calc_score(i, j, set())
-    return scores
+        score, rating = calc_score(i, j, set())
+        total_score += score
+        total_rating += rating
+    return total_score, total_rating
 
 def main():
     tracemalloc.start()
@@ -54,21 +60,13 @@ def main():
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
     print("==================================")
 
-    print("Solving part 1...")
+    print("Solving part 1 and 2...")
     start = time.perf_counter()
-    scores = calc_scores(map, trailheads)
+    total_score, total_rating = calc_scores(map, trailheads)
     current, peak = tracemalloc.get_traced_memory()
     end = time.perf_counter()
-    print(f"Part 1 response: {scores}")
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
-    print("==================================")
-
-    print("Solving part 2...")
-    start = time.perf_counter()
-    current, peak = tracemalloc.get_traced_memory()
-    end = time.perf_counter()
-    print(f"Part 2 response: ")
+    print(f"Part 1 response: {total_score}")
+    print(f"Part 2 response: {total_rating}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
 
