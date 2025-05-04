@@ -8,7 +8,7 @@ def extract_disk_map():
     input_path = script_dir / "input.txt"
     disk_map = []
     files = []
-    empty_spaces = ListNode(0, 0)
+    empty_spaces = ListNode(None)
     curr_node = empty_spaces
     pos = 0
     id = 0
@@ -24,7 +24,7 @@ def extract_disk_map():
                 id += 1
             else:
                 if num > 0:
-                    node = ListNode(len(disk_map), num)
+                    node = ListNode([len(disk_map), num])
                     curr_node.next = node
                     curr_node = node
                 for _ in range(num):
@@ -55,14 +55,14 @@ def calculate_checksum(disk_map):
 def get_next_empty_space_by_size(empty_spaces, size):
     node = empty_spaces
     while node.next:
-        if node.next.size == size:
-            empty_space_start = node.next.start
+        if node.next.val[1] == size:
+            empty_space_start = node.next.val[0]
             node.next = node.next.next
             return empty_space_start
-        elif node.next.size > size:
-            empty_space_start = node.next.start
-            node.next.start += size
-            node.next.size -= size
+        elif node.next.val[1] > size:
+            empty_space_start = node.next.val[0]
+            node.next.val[0] += size
+            node.next.val[1] -= size
             return empty_space_start
         node = node.next
     return None
