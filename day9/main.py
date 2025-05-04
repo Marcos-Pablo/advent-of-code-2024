@@ -1,7 +1,7 @@
 from pathlib import Path
 import time
 import tracemalloc
-from list_node import ListNode
+from data_structures.list_node import ListNode
 
 def extract_disk_map():
     script_dir = Path(__file__).parent
