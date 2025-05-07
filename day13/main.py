@@ -2,62 +2,42 @@ from pathlib import Path
 import time
 import tracemalloc
 import re
-
-class Machine:
-    def __init__(self):
-        self.buttom_a_x = -1
-        self.buttom_a_y = -1
-        self.buttom_b_x = -1
-        self.buttom_b_y = -1
-        self.prize_x = -1
-        self.prize_y = -1
+from day13.machine import Machine
 
 def extract_machines():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
     machines = []
     with open(input_path.resolve(), "r") as file:
-        label = 0
-        machine = Machine()
-        for line in file:
-            if label == 0:
-                x, y = re.findall("\\d\\d", line)
-                machine.buttom_a_x = int(x)
-                machine.buttom_a_y = int(y)
-                label += 1
-            elif label == 1:
-                x, y = re.findall("\\d\\d", line)
-                machine.buttom_b_x = int(x)
-                machine.buttom_b_y = int(y)
-                label += 1
-            elif label == 2:
-                x, y = re.findall("\\d{3,7}", line)
-                machine.prize_x = int(x)
-                machine.prize_y = int(y)
-                label += 1
-                machines.append(machine)
-            elif label == 3:
-                label = 0
-                machine = Machine()
+        for block in file.read().split("\n\n"):
+            machine = Machine()
+            x1, y1, x2, y2, x3, y3 = re.findall(r"\d+", block)
+            machine.buttom_a.x = int(x1)
+            machine.buttom_a.y = int(y1)
+            machine.buttom_b.x = int(x2)
+            machine.buttom_b.y = int(y2)
+            machine.prize.x = int(x3)
+            machine.prize.y = int(y3)
+            machines.append(machine)
     return machines
 
 def calc_min_cost1(machine):
     cache = {}
     def press_buttom(x, y, times_pressed_a, times_pressed_b):
-        if x == machine.prize_x and y == machine.prize_y:
+        if x == machine.prize.x and y == machine.prize.y:
             return 0
         if (x, y) in cache:
             return cache[(x, y)]
-        if x > machine.prize_x or y > machine.prize_y:
+        if x > machine.prize.x or y > machine.prize.y:
             return float("inf")
         
         if times_pressed_a <= 100:
-            press_a = 3 + press_buttom(x + machine.buttom_a_x, y + machine.buttom_a_y, times_pressed_a + 1, times_pressed_b)
+            press_a = 3 + press_buttom(x + machine.buttom_a.x, y + machine.buttom_a.y, times_pressed_a + 1, times_pressed_b)
         else:
             press_a = float("inf")
 
         if times_pressed_b <= 100:
-            press_b = 1 + press_buttom(x + machine.buttom_b_x, y + machine.buttom_b_y, times_pressed_a, times_pressed_b + 1)
+            press_b = 1 + press_buttom(x + machine.buttom_b.x, y + machine.buttom_b.y, times_pressed_a, times_pressed_b + 1)
         else:
             press_b = float("inf")
         cache[(x, y)] = min(press_a, press_b)
@@ -75,16 +55,16 @@ def calc_min_tokens_to_win_prizes1(machines):
 def calc_min_cost2(machine):
     cache = {}
     def press_buttom(x, y):
-        if x == machine.prize_x + 10000000000000 and y == machine.prize_y + 10000000000000:
+        if x == machine.prize.x + 10000000000000 and y == machine.prize.y + 10000000000000:
             return 0
         if (x, y) in cache:
             return cache[(x, y)]
-        if x > machine.prize_x + 10000000000000 or y > machine.prize_y + 10000000000000:
+        if x > machine.prize.x + 10000000000000 or y > machine.prize.y + 10000000000000:
             return float("inf")
         
-        press_a = 3 + press_buttom(x + machine.buttom_a_x, y + machine.buttom_a_y)
+        press_a = 3 + press_buttom(x + machine.buttom_a.x, y + machine.buttom_a.y)
 
-        press_b = 1 + press_buttom(x + machine.buttom_b_x, y + machine.buttom_b_y)
+        press_b = 1 + press_buttom(x + machine.buttom_b.x, y + machine.buttom_b.y)
         cache[(x, y)] = min(press_a, press_b)
         return cache[(x, y)]
     return press_buttom(0, 0)
