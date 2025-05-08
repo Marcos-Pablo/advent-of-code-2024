@@ -2,108 +2,83 @@ from pathlib import Path
 import time
 import tracemalloc
 import re
-from day13.machine import Machine
+import math
 
-def extract_machines():
+def calc_cost(ax, ay, bx, by, px, py):
+    original_ax = ax
+    original_ay = ay
+    original_bx = bx
+    original_by = by
+    original_px = px
+    original_py = py
+
+    lcm = math.lcm(bx, by)
+    factor1 = lcm // bx
+    factor2 = lcm // by
+
+    ax *= (-factor1)
+    bx *= (-factor1)
+    px *= (-factor1)
+
+    ay *= (factor2)
+    by *= (factor2)
+    py *= (factor2)
+
+    left_side = ax + ay
+    right_side = px + py
+
+    times_pressed_a = right_side / left_side
+    if times_pressed_a % 1 != 0:
+        return None
+
+    ax = original_ax
+    ay = original_ay
+    bx = original_bx
+    by = original_by
+    px = original_px
+    py = original_py
+    
+    ax *= times_pressed_a
+    ay *= times_pressed_a
+
+    left_side = bx + by
+    right_side = px + py - (ax + ay)
+
+    times_pressed_b = right_side / left_side
+
+    if times_pressed_b % 1 != 0:
+        return None
+
+    price = (times_pressed_a * 3) + (times_pressed_b * 1)
+    return price
+
+def calc_min_tokens_win_every_possible_prize():
+    print("Processing input...")
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
-    machines = []
+    price1 = 0
+    price2 = 0
     with open(input_path.resolve(), "r") as file:
         for block in file.read().split("\n\n"):
-            machine = Machine()
-            x1, y1, x2, y2, x3, y3 = re.findall(r"\d+", block)
-            machine.buttom_a.x = int(x1)
-            machine.buttom_a.y = int(y1)
-            machine.buttom_b.x = int(x2)
-            machine.buttom_b.y = int(y2)
-            machine.prize.x = int(x3)
-            machine.prize.y = int(y3)
-            machines.append(machine)
-    return machines
+            ax, ay, bx, by, px, py = map(int ,re.findall(r"\d+", block))
 
-def calc_min_cost1(machine):
-    cache = {}
-    def press_buttom(x, y, times_pressed_a, times_pressed_b):
-        if x == machine.prize.x and y == machine.prize.y:
-            return 0
-        if (x, y) in cache:
-            return cache[(x, y)]
-        if x > machine.prize.x or y > machine.prize.y:
-            return float("inf")
-        
-        if times_pressed_a <= 100:
-            press_a = 3 + press_buttom(x + machine.buttom_a.x, y + machine.buttom_a.y, times_pressed_a + 1, times_pressed_b)
-        else:
-            press_a = float("inf")
+            price = calc_cost(ax, ay, bx, by, px, py)
+            if price != None:
+                price1 += price
 
-        if times_pressed_b <= 100:
-            press_b = 1 + press_buttom(x + machine.buttom_b.x, y + machine.buttom_b.y, times_pressed_a, times_pressed_b + 1)
-        else:
-            press_b = float("inf")
-        cache[(x, y)] = min(press_a, press_b)
-        return cache[(x, y)]
-    return press_buttom(0, 0, 0, 0)
-
-def calc_min_tokens_to_win_prizes1(machines):
-    tokens = 0
-    for machine in machines:
-        cost = calc_min_cost1(machine)
-        if cost != float("inf"):
-            tokens += cost
-    return tokens
-
-def calc_min_cost2(machine):
-    cache = {}
-    def press_buttom(x, y):
-        if x == machine.prize.x + 10000000000000 and y == machine.prize.y + 10000000000000:
-            return 0
-        if (x, y) in cache:
-            return cache[(x, y)]
-        if x > machine.prize.x + 10000000000000 or y > machine.prize.y + 10000000000000:
-            return float("inf")
-        
-        press_a = 3 + press_buttom(x + machine.buttom_a.x, y + machine.buttom_a.y)
-
-        press_b = 1 + press_buttom(x + machine.buttom_b.x, y + machine.buttom_b.y)
-        cache[(x, y)] = min(press_a, press_b)
-        return cache[(x, y)]
-    return press_buttom(0, 0)
-
-def calc_min_tokens_to_win_prizes2(machines):
-    tokens = 0
-    for machine in machines:
-        cost = calc_min_cost2(machine)
-        if cost != float("inf"):
-            tokens += cost
-    return tokens
+            price = calc_cost(ax, ay, bx, by, px + 10000000000000, py + 10000000000000)
+            if price != None:
+                price2 += price
+    return price1, price2
 
 def main():
     tracemalloc.start()
-    print("Processing input...")
     start = time.perf_counter()
-    machines = extract_machines()
+    price1, price2 = calc_min_tokens_win_every_possible_prize()
+    print(f"Response part 1: {price1}")
+    print(f"Response part 2: {price2:.0f}")
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
-    print("==================================")
-
-    print("Solving part 1...")
-    start = time.perf_counter()
-    tokens1 = calc_min_tokens_to_win_prizes1(machines)
-    current, peak = tracemalloc.get_traced_memory()
-    end = time.perf_counter()
-    print(f"Response part 1: {tokens1}")
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
-    print("==================================")
-
-    print("Solving part 2...")
-    start = time.perf_counter()
-    tokens2 = calc_min_tokens_to_win_prizes2(machines)
-    current, peak = tracemalloc.get_traced_memory()
-    end = time.perf_counter()
-    print(f"Response part 2: {tokens2}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
 main()
