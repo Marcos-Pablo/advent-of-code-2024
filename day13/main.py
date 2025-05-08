@@ -19,7 +19,7 @@ def calc_min_tokens_win_every_possible_prize():
     price2 = 0
     with open(input_path.resolve(), "r") as file:
         for block in file.read().split("\n\n"):
-            ax, ay, bx, by, px, py = map(int ,re.findall(r"\d+", block))
+            ax, ay, bx, by, px, py = map(int, re.findall(r"\d+", block))
             price1 += calc_cost(ax, ay, bx, by, px, py)
             price2 += calc_cost(ax, ay, bx, by, px + 10000000000000, py + 10000000000000)
     return price1, price2
