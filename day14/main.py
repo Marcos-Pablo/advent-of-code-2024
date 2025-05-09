@@ -59,15 +59,17 @@ def main():
     tracemalloc.start()
     start = time.perf_counter()
     robots = extract_input()
+    n = 101
+    m = 103
+    times = 100
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
     print("==================================")
-
     start = time.perf_counter()
-    move_robots(100, robots, 101, 103)
-    safety_factor = calc_safety_factor(robots, 101, 103)
+    move_robots(times, robots, n, m)
+    safety_factor = calc_safety_factor(robots, n, m)
     print(f"Response part 1: {safety_factor}")
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
