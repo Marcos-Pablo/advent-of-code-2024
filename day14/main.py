@@ -3,46 +3,35 @@ import time
 import tracemalloc
 import re
 
-def extract_input(width, height):
+def extract_input():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
     robots = []
-    grid: list[list[int | str]] = [["." for _ in range(width)] for _ in range(height)]
     with open(input_path.resolve(), "r") as file:
         for line in file:
             x, y, vx, vy = map(int, re.findall(r"-?\d+", line))
             robots.append([x, y, vx, vy])
-            if grid[y][x] == ".":
-                grid[y][x] = 0
-            grid[y][x] += 1
-    return robots, grid
+    return robots
 
-def calc_new_pos(x, y, vx, vy, width, height):
-    new_x = x + vx
-    new_y = y + vy
-    if new_x < 0:
-        new_x = width + new_x
-    elif new_x >= width:
-        new_x %= width
+def solve(times, robots, width, height):
+    min_safety_factor = float("inf")
+    safety_factor_after_100_seconds = 0
+    number_of_seconds_to_draw_tree = 0
 
-    if new_y < 0:
-        new_y = height + new_y
-    elif new_y >= height:
-        new_y %= height 
-    return new_x, new_y
-
-def move_robots(times, robots, width, height, grid):
-    for _ in range(times):
+    for second in range(times):
         for i, (x, y, vx, vy) in enumerate(robots):
-            new_x, new_y = calc_new_pos(x, y, vx, vy, width, height)
-            grid[y][x] -= 1
-            if grid[y][x] == 0:
-                grid[y][x] = "."
+            new_x = (x + (1 * vx)) % width
+            new_y = (y + (1 * vy)) % height
             robots[i][0] = new_x
             robots[i][1] = new_y
-            if grid[new_y][new_x] == ".":
-                grid[new_y][new_x] = 0
-            grid[new_y][new_x] += 1
+        safety_factor = calc_safety_factor(robots, width, height)
+        if safety_factor < min_safety_factor:
+            min_safety_factor = safety_factor
+            number_of_seconds_to_draw_tree = second
+        if second == 99:
+            safety_factor_after_100_seconds = safety_factor
+
+    return safety_factor_after_100_seconds, number_of_seconds_to_draw_tree + 1
 
 def calc_safety_factor(robots, width, height):
     top_left_quadrant = 0
@@ -64,29 +53,30 @@ def calc_safety_factor(robots, width, height):
             bottom_right_quadrant += 1
     return top_left_quadrant * top_right_quadrant * bottom_left_quadrant * bottom_right_quadrant
 
-def print_grid(grid):
-    for row in grid:
-        print(" ".join(str(element) for element in row))
-
 def main():
     print("Processing input...")
     tracemalloc.start()
     start = time.perf_counter()
     width = 101
     height = 103
-    times = 100
-    robots, grid = extract_input(width, height)
+    times = 10000
+
+    robots = extract_input()
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
+
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
     print("==================================")
+
     start = time.perf_counter()
-    move_robots(times, robots, width, height, grid)
-    safety_factor = calc_safety_factor(robots, width, height)
-    print(f"Response part 1: {safety_factor}")
+    safety_factor_after_100_seconds, number_of_seconds_to_draw_tree = solve(times, robots, width, height)
+
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
+    print(f"Response part 1: {safety_factor_after_100_seconds}")
+    print(f"Response part 2: {number_of_seconds_to_draw_tree}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+
 main()
