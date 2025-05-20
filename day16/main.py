@@ -8,6 +8,7 @@ UP = 0
 RIGHT = 1
 BOTTOM = 2
 LEFT = 3
+ALL_DIRECTIONS = [UP, RIGHT, BOTTOM, LEFT]
 
 def extract_maze():
     script_dir = Path(__file__).parent
@@ -74,7 +75,7 @@ def get_neighbours(maze, i, j, direction):
     return neighbours
 
 def calc_min_score_to_get_out_of_the_maze(maze):
-    m = get_log_base_two(get_next_pow_of_two(len(maze[0])))
+    m = get_log_base_two(len(maze[0]))
     origin_row, origin_col = get_origin(maze)
     heap = [(0, RIGHT, origin_row, origin_col)]
     key = get_hash_key(origin_row, origin_col, RIGHT, m)
@@ -83,9 +84,9 @@ def calc_min_score_to_get_out_of_the_maze(maze):
     while heap:
         cost_so_far, direction, i, j = heapq.heappop(heap)
         if cost_so_far > min_score:
-            continue
+            break
         if maze[i][j] == "E":
-            min_score = min(min_score, cost_so_far)
+            min_score = cost_so_far
         for row, col, cost, direction in get_neighbours(maze, i, j, direction):
             neighbour_key = get_hash_key(row, col, direction, m)
             if neighbour_key not in cache or cost_so_far + cost < cache[neighbour_key]:
@@ -93,95 +94,106 @@ def calc_min_score_to_get_out_of_the_maze(maze):
                 heapq.heappush(heap, (cost_so_far + cost, direction, row, col))
     return min_score, cache
 
-def get_up_states(i, j, maze, cache):
+def get_up_states(i, j, direction, maze, cache, states_cost):
     if i - 1 < 0:
-        return []
-
-    m = get_log_base_two(get_next_pow_of_two(len(maze[0])))
-    states = {}
+        return
+    m = get_log_base_two(len(maze[0]))
     row, col = i - 1, j
-    for direction in [UP, RIGHT,BOTTOM, BOTTOM]:
-        key = get_hash_key(row, col, direction, m)
+    for new_direction in [RIGHT, BOTTOM, LEFT]:
+        cost = 1 if new_direction == direction else 1001
+        key = get_hash_key(row, col, new_direction, m)
         if key in cache:
-            states[(row, col, direction)] = cache[key]
-    return states
+            states_cost[(row, col, new_direction)] = cache[key] + cost
 
-def get_right_states(i, j, maze, cache):
+def get_right_states(i, j, direction, maze, cache, states_cost):
     if j + 1 >= len(maze[0]):
-        return []
-
-    m = get_log_base_two(get_next_pow_of_two(len(maze[0])))
-    states = {}
+        return
+    m = get_log_base_two(len(maze[0]))
     row, col = i, j + 1
-    for direction in [UP, RIGHT,BOTTOM, BOTTOM]:
-        key = get_hash_key(row, col, direction, m)
+    for new_direction in [UP, BOTTOM, LEFT]:
+        cost = 1 if new_direction == direction else 1001
+        key = get_hash_key(row, col, new_direction, m)
         if key in cache:
-            states[(row, col, direction)] = cache[key]
-    return states
+            states_cost[(row, col, new_direction)] = cache[key] + cost
 
-def get_bottom_states(i, j, maze, cache):
+def get_bottom_states(i, j, direction, maze, cache, states_cost):
     if i + 1 >= len(maze):
-        return []
-
-    m = get_log_base_two(get_next_pow_of_two(len(maze[0])))
-    states = {}
+        return
+    m = get_log_base_two(len(maze[0]))
     row, col = i + 1, j
-    for direction in [UP, RIGHT,BOTTOM, BOTTOM]:
-        key = get_hash_key(row, col, direction, m)
+    for new_direction in [UP, RIGHT, LEFT]:
+        cost = 1 if new_direction == direction else 1001
+        key = get_hash_key(row, col, new_direction, m)
         if key in cache:
-            states[(row, col, direction)] = cache[key]
-    return states
+            states_cost[(row, col, new_direction)] = cache[key] + cost
 
-def get_left_states(i, j, maze, cache):
+def get_left_states(i, j, direction, maze, cache, states_cost):
     if j - 1 < 0:
-        return []
-
-    m = get_log_base_two(get_next_pow_of_two(len(maze[0])))
-    states = {}
+        return
+    m = get_log_base_two(len(maze[0]))
     row, col = i, j - 1
-    for direction in [UP, RIGHT,BOTTOM, BOTTOM]:
-        key = get_hash_key(row, col, direction, m)
+    for new_direction in [UP, RIGHT, BOTTOM]:
+        cost = 1 if new_direction == direction else 1001
+        key = get_hash_key(row, col, new_direction, m)
         if key in cache:
-            states[(row, col, direction)] = cache[key]
-    return states
+            states_cost[(row, col, new_direction)] = cache[key] + cost
 
-def get_neighbours_with_min_cost(i, j, maze, cache):
+def get_neighbours_with_min_cost(i, j, direction, maze, cache):
     states_cost = {}
-    states_cost.update(get_up_states(i, j, maze, cache))
-    states_cost.update(get_right_states(i, j, maze, cache))
-    states_cost.update(get_bottom_states(i, j, maze, cache))
-    states_cost.update(get_left_states(i, j, maze, cache))
-    min_cost = min(states_cost.values())
+    if direction == UP:
+        get_bottom_states(i, j, direction, maze, cache, states_cost)
+    elif direction == RIGHT:
+        get_left_states(i, j, direction, maze, cache, states_cost)
+    elif direction == BOTTOM:
+        get_up_states(i, j, direction, maze, cache, states_cost)
+    else:
+        get_right_states(i, j, direction, maze, cache, states_cost) 
     states = []
-    for (row, col, _), cost in states_cost.items():
+
+    if not states_cost:
+        return states
+
+    min_cost = min(states_cost.values())
+    for (row, col, direction), cost in states_cost.items():
         if cost == min_cost:
-            states.append((row, col))
+            states.append((row, col, direction))
     return states
 
 def get_number_of_best_seats(maze, cache):
     dest_row, dest_col = get_destination(maze)
+    m = get_log_base_two(len(maze[0]))
+    q = deque()
     visited = set()
-    q = deque([(dest_row, dest_col)])
-    while q:
-        i, j = q.popleft()
-        if (i, j) in visited:
-            continue
-        visited.add((i, j))
-        states = get_neighbours_with_min_cost(i, j, maze, cache)
-        q.extend(states)
-    return len(visited)
+    best_seats = set()
+    end_states = []
+    min_end_state = float("inf")
 
-def get_next_pow_of_two(x):
-    pow = 1
-    while pow < x:
-        pow <<= 1
-    return pow
+    for direction in ALL_DIRECTIONS:
+        key = get_hash_key(dest_row, dest_col, direction, m)
+        if key in cache:
+            end_states.append((dest_row, dest_col, direction))
+            min_end_state = min(min_end_state, cache[key])
+
+    for row, col, direction in end_states:
+        key = get_hash_key(row, col, direction, m)
+        if cache[key] == min_end_state:
+            q.append((row, col, direction))
+
+    while q:
+        i, j, direction = q.popleft()
+        if (i, j, direction) in visited:
+            continue
+        best_seats.add((i, j))
+        visited.add((i, j, direction))
+        states = get_neighbours_with_min_cost(i, j, direction, maze, cache)
+        q.extend(states)
+    return len(best_seats)
 
 def get_log_base_two(x):
-    log = 1
-    while log << 1 < x:
-        log <<= 1
-    return log
+    shift = 1
+    while 1 << shift < x:
+        shift += 1
+    return shift
 
 def get_hash_key(row, col, direction, m):
     return (((row << m) | col) << 2) | direction
