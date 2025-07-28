@@ -3,11 +3,11 @@ from collections import deque
 import time
 import tracemalloc
 
-NUM_ROWS = 7
-NUM_COLS = 7
-NUM_BYTES = 12
+NUM_ROWS = 71
+NUM_COLS = 71
+NUM_BYTES = 1024
 
-def extract_matrix():
+def find_answers():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
     matrix = [["." for _ in range(NUM_COLS)] for _ in range(NUM_ROWS)]
@@ -16,7 +16,15 @@ def extract_matrix():
             coords = file.readline().split(",")
             j, i = int(coords[0]), int(coords[1])
             matrix[i][j] = "#"
-    return matrix
+
+        shortest_path = find_shortest_path(matrix)
+        while True:
+            coords = file.readline().split(",")
+            j, i = int(coords[0]), int(coords[1])
+            matrix[i][j] = "#"
+            curr_best_path = find_shortest_path(matrix)
+            if curr_best_path == None:
+                return shortest_path, (j, i)
 
 def print_matrix(matrix):
     for line in matrix:
@@ -67,30 +75,15 @@ def main():
     print("Processing input...")
     tracemalloc.start()
     start = time.perf_counter()
-    matrix = extract_matrix()
+    shortest_path, first_blocking_byte = find_answers()
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
-    print_matrix(matrix)
 
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
-    print("==================================")
-
-    start = time.perf_counter()
-    shortest_path = find_shortest_path(matrix)
-    end = time.perf_counter()
-    current, peak = tracemalloc.get_traced_memory()
     print(f"Response part 1: {shortest_path}")
+    print(f"Response part 2: {first_blocking_byte[0]},{first_blocking_byte[1]}")
+
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
     print("==================================")
-
-    start = time.perf_counter()
-
-    end = time.perf_counter()
-    current, peak = tracemalloc.get_traced_memory()
-    print(f"Response part 2: ")
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
 
 main()
