@@ -20,6 +20,7 @@ class ChronoSpatialComputer:
             self.instructions = list(map(int, program.split(": ")[1].split(",")))
 
     def execute_program(self):
+        count = 0
         while self.current_instruction + 1 < len(self.instructions):
             instruction, operand = self.get_next_instruction_and_operand()
             match instruction:
@@ -34,11 +35,14 @@ class ChronoSpatialComputer:
                 case 4:
                     self.bxc(operand)
                 case 5:
+                    count += 1
                     self.out(operand)
                 case 6:
                     self.bdv(operand)
                 case 7:
                     self.cdv(operand)
+        self.print_registers()
+        print("count -> ", count)
 
     def get_combo_operand(self, operand: int) -> int:
         match operand:
@@ -58,10 +62,7 @@ class ChronoSpatialComputer:
         return instruction, operand
 
     def adv(self, operand):
-        numerator = self.register_a
-        denominator = 2 ** self.get_combo_operand(operand)
-        result = numerator // denominator
-        self.register_a = result
+        self.register_a >>= self.get_combo_operand(operand)
 
     def bxl(self, operand):
         self.register_b  ^= operand
@@ -81,16 +82,10 @@ class ChronoSpatialComputer:
         self.output.append(self.get_combo_operand(operand) & 0b111)
 
     def bdv(self, operand):
-        numerator = self.register_a
-        denominator = 2 ** self.get_combo_operand(operand)
-        result = numerator // denominator
-        self.register_b = result
+        self.register_b = self.register_a >> self.get_combo_operand(operand)
 
     def cdv(self, operand):
-        numerator = self.register_a
-        denominator = 2 ** self.get_combo_operand(operand)
-        result = numerator // denominator
-        self.register_c = result
+        self.register_c = self.register_a >> self.get_combo_operand(operand)
 
     def get_output(self):
         return ",".join(map(str, self.output))
@@ -99,6 +94,38 @@ class ChronoSpatialComputer:
         print(f"register A -> {self.register_a}")
         print(f"register B -> {self.register_b}")
         print(f"register C -> {self.register_c}")
+
+def simulate_program():
+    a = 64196994
+    b = 0
+    c = 0
+    output = []
+    while True:
+        b = (a & 7) ^ 1
+        c = (a >> b) & 7
+        b ^= 5
+        b ^= c
+        output.append(str(b))
+        a >>= 3
+        if not a:
+            break
+    print(",".join(output))
+
+def simulate_example():
+    a = 7
+    output = []
+    while True:
+        a >>= 3
+        output.append(str(a & 7))
+        if not a:
+            break
+    print(",".join(output))
+    reverse_example()
+
+def reverse_example():
+    a = 3
+    for _ in range(4):
+        a <<= 3
 
 def main():
     print("Processing input...")
@@ -127,4 +154,9 @@ def main():
     print(f"Response part 2: ")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+
+
+    print("==================================")
+    simulate_program()
+    simulate_example()
 main()
