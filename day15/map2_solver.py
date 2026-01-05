@@ -10,14 +10,15 @@ def solve(map, moves, robot_row, robot_col):
             robot_row, robot_col = move_left(map, robot_row, robot_col)
     return calc_sum_coordinates(map)
 
+
 def move_up(map, row, col):
     def can_move(i, j):
         if map[i][j] == "#":
             return False
-        
+
         if map[i][j] == ".":
             return True
-        
+
         if map[i][j] == "[":
             return can_move(i - 1, j) and can_move(i - 1, j + 1)
         else:
@@ -40,14 +41,15 @@ def move_up(map, row, col):
         return row - 1, col
     return row, col
 
+
 def move_down(map, row, col):
     def can_move(i, j):
         if map[i][j] == "#":
             return False
-        
+
         if map[i][j] == ".":
             return True
-        
+
         if map[i][j] == "[":
             return can_move(i + 1, j) and can_move(i + 1, j + 1)
         else:
@@ -70,6 +72,7 @@ def move_down(map, row, col):
         return row + 1, col
     return row, col
 
+
 def move_right(map, row, col):
     j = col + 1
     while map[row][j] == "[" or map[row][j] == "]":
@@ -82,6 +85,7 @@ def move_right(map, row, col):
         return row, col + 1
     return row, col
 
+
 def move_left(map, row, col):
     j = col - 1
     while map[row][j] == "[" or map[row][j] == "]":
@@ -93,6 +97,7 @@ def move_left(map, row, col):
         map[row][col] = "."
         return row, col - 1
     return row, col
+
 
 def calc_sum_coordinates(map):
     res = 0

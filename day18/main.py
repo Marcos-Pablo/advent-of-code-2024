@@ -7,6 +7,7 @@ NUM_ROWS = 71
 NUM_COLS = 71
 NUM_BYTES = 1024
 
+
 def find_answers():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -26,31 +27,31 @@ def find_answers():
             if curr_best_path == None:
                 return shortest_path, (j, i)
 
+
 def print_matrix(matrix):
     for line in matrix:
         print(" ".join(line))
 
+
 def get_neighbours(i, j, matrix):
-    moves = [
-        (-1, 0),
-        (0, 1),
-        (1, 0),
-        (0, -1)
-    ]
+    moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
     neighbours = []
 
     for m1, m2 in moves:
         new_row, new_col = i + m1, j + m2
         if (
-            new_row < 0 or new_row >= NUM_ROWS or
-            new_col < 0 or new_col >= NUM_COLS or
-            matrix[new_row][new_col] == "#"
+            new_row < 0
+            or new_row >= NUM_ROWS
+            or new_col < 0
+            or new_col >= NUM_COLS
+            or matrix[new_row][new_col] == "#"
         ):
             continue
         neighbours.append((new_row, new_col))
 
     return neighbours
+
 
 def find_shortest_path(matrix):
     q = deque([(0, 0)])
@@ -71,6 +72,7 @@ def find_shortest_path(matrix):
 
         dist += 1
 
+
 def main():
     print("Processing input...")
     tracemalloc.start()
@@ -83,7 +85,10 @@ def main():
     print(f"Response part 2: {first_blocking_byte[0]},{first_blocking_byte[1]}")
 
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
+
 
 main()

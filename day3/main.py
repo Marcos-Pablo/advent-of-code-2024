@@ -3,14 +3,18 @@ from pathlib import Path
 import time
 import tracemalloc
 
+
 def extract_valid_instructions():
     matches = []
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
     with open(input_path.resolve(), "r") as file:
         for line in file:
-            matches += re.findall("mul\\(\\d{1,3},\\d{1,3}\\)|do\\(\\)|don't\\(\\)", line)
+            matches += re.findall(
+                "mul\\(\\d{1,3},\\d{1,3}\\)|do\\(\\)|don't\\(\\)", line
+            )
     return matches
+
 
 def process_instructions(instructions):
     res = 0
@@ -30,6 +34,7 @@ def process_instructions(instructions):
 
     return res, res_with_tokens
 
+
 def main():
     start = time.perf_counter()
     tracemalloc.start()
@@ -42,6 +47,9 @@ def main():
     print(f"result without considering tokens -> {res}")
     print(f"result considering tokens -> {res_with_tokens}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()

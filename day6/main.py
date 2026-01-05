@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 import tracemalloc
 
+
 def extract_matrix_and_starting_point():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -20,6 +21,7 @@ def extract_matrix_and_starting_point():
                     matrix[-1].append(c)
     return matrix, starting_point
 
+
 def get_new_position(i, j, direction):
     if direction == 0:
         return i - 1, j
@@ -30,6 +32,7 @@ def get_new_position(i, j, direction):
     else:
         return i, j - 1
 
+
 def has_cycle(matrix, i, j, direction):
     n, m = len(matrix), len(matrix[0])
     visited = defaultdict(set)
@@ -39,12 +42,13 @@ def has_cycle(matrix, i, j, direction):
             return False
         if (new_row, new_col) in visited and direction in visited[(new_row, new_col)]:
             return True
-        
+
         visited[(i, j)].add(direction)
         if matrix[new_row][new_col] == ".":
             i, j = new_row, new_col
         else:
             direction = (direction + 1) % 4
+
 
 def trace_patrol_path(matrix, starting_point):
     n, m = len(matrix), len(matrix[0])
@@ -61,13 +65,16 @@ def trace_patrol_path(matrix, starting_point):
 
         if matrix[new_row][new_col] == ".":
             matrix[new_row][new_col] = "#"
-            if (new_row, new_col) not in visited and has_cycle(matrix, i, j, (direction + 1) % 4):
+            if (new_row, new_col) not in visited and has_cycle(
+                matrix, i, j, (direction + 1) % 4
+            ):
                 cycles += 1
             matrix[new_row][new_col] = "."
             i, j = new_row, new_col
         else:
             direction = (direction + 1) % 4
     return len(visited), cycles
+
 
 def main():
     start = time.perf_counter()
@@ -83,6 +90,9 @@ def main():
     print(f"Part 1 response: {positions_visited}")
     print(f"Part 2 response: {cycles}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()

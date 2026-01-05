@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def process_input():
     reports = []
     script_dir = Path(__file__).parent
@@ -12,6 +13,7 @@ def process_input():
             reports.append(report)
     return reports
 
+
 def is_report_safe(report):
     is_increasing = True if report[0] < report[1] else False
     for i in range(1, len(report)):
@@ -19,22 +21,24 @@ def is_report_safe(report):
         curr_level = report[i]
         level_diff = abs(curr_level - prev_level)
         if (
-            prev_level == curr_level or 
-            level_diff > 3 or 
-            (is_increasing and prev_level > curr_level) or
-            (not is_increasing and prev_level < curr_level)
+            prev_level == curr_level
+            or level_diff > 3
+            or (is_increasing and prev_level > curr_level)
+            or (not is_increasing and prev_level < curr_level)
         ):
             return False
     return True
+
 
 def is_report_safe_removing_one_level(report):
     if is_report_safe(report):
         return True
 
     for i in range(len(report)):
-        if is_report_safe(report[:i] + report[i + 1:]):
+        if is_report_safe(report[:i] + report[i + 1 :]):
             return True
     return False
+
 
 def count_safe_reports(reports):
     safe_reports = 0
@@ -48,10 +52,14 @@ def count_safe_reports(reports):
 
     return safe_reports, safe_reports_removing_at_most_one_level
 
+
 def main():
     reports = process_input()
     safe_reports, safe_reports_removing_at_most_one_level = count_safe_reports(reports)
     print(f"Number of safe reports -> {safe_reports}")
-    print(f"Number of safe reports removing at most one level-> {safe_reports_removing_at_most_one_level}")
+    print(
+        f"Number of safe reports removing at most one level-> {safe_reports_removing_at_most_one_level}"
+    )
+
 
 main()

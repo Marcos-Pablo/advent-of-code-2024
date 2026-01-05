@@ -1,6 +1,7 @@
 from pathlib import Path
 from collections import Counter
 
+
 def solve_part_one(left_list, right_list):
     total_diff = 0
 
@@ -9,6 +10,7 @@ def solve_part_one(left_list, right_list):
 
     return total_diff
 
+
 def solve_part_two(left_list, right_list):
     similarity_score = 0
     appearances_count = Counter(right_list)
@@ -16,6 +18,7 @@ def solve_part_two(left_list, right_list):
         similarity_score += left_id * appearances_count.get(left_id, 0)
 
     return similarity_score
+
 
 def process_input():
     script_dir = Path(__file__).parent
@@ -32,6 +35,7 @@ def process_input():
 
     return left_list, right_list
 
+
 def main():
     left_list, right_list = process_input()
     response_part_one = solve_part_one(left_list, right_list)
@@ -39,5 +43,6 @@ def main():
 
     print(f"response part one - > {response_part_one}")
     print(f"response part two - > {response_part_two}")
-main()
 
+
+main()

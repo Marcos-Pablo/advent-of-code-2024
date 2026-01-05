@@ -2,6 +2,7 @@ from pathlib import Path
 from collections import defaultdict, deque
 import time
 
+
 def extract_updates_and_rules():
     rules = defaultdict(list)
     updates = []
@@ -19,6 +20,7 @@ def extract_updates_and_rules():
                 updates.append(line.replace("\n", "").split(","))
     return updates, rules
 
+
 def is_update_valid(update, rules):
     pages = set(update)
     processed_pages = set()
@@ -28,6 +30,7 @@ def is_update_valid(update, rules):
                 return False
         processed_pages.add(page)
     return True
+
 
 def find_topological_sort(update, rules):
     pages = set()
@@ -50,7 +53,7 @@ def find_topological_sort(update, rules):
 
     while queue:
         page = queue.popleft()
-        sorted_update.append(page)   
+        sorted_update.append(page)
         for dependent in rules[page]:
             if dependent in pages:
                 degrees[dependent] -= 1
@@ -58,6 +61,7 @@ def find_topological_sort(update, rules):
                     queue.append(dependent)
 
     return sorted_update
+
 
 def process_updates(updates, rules):
     middle_page_sum = 0
@@ -75,14 +79,16 @@ def process_updates(updates, rules):
 
     return middle_page_sum, middle_page_sum_for_fixed
 
+
 def main():
     start = time.perf_counter()
     updates, rules = extract_updates_and_rules()
     middle_page_sum, middle_page_sum_for_fixed = process_updates(updates, rules)
     end = time.perf_counter()
-    
+
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(f"Middle page sum -> {middle_page_sum}")
     print(f"Middle page sum for fixed -> {middle_page_sum_for_fixed}")
+
 
 main()

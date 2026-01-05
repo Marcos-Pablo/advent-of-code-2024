@@ -3,6 +3,7 @@ import time
 import tracemalloc
 import re
 
+
 def calc_cost(ax, ay, bx, by, px, py):
     ca = ((px * by) - (py * bx)) / ((ax * by) - (ay * bx))
     cb = (px - (ax * ca)) / bx
@@ -10,6 +11,7 @@ def calc_cost(ax, ay, bx, by, px, py):
         price = (ca * 3) + (cb * 1)
         return price
     return 0
+
 
 def calc_min_tokens_win_every_possible_prize():
     print("Processing input...")
@@ -21,8 +23,11 @@ def calc_min_tokens_win_every_possible_prize():
         for block in file.read().split("\n\n"):
             ax, ay, bx, by, px, py = map(int, re.findall(r"\d+", block))
             price1 += calc_cost(ax, ay, bx, by, px, py)
-            price2 += calc_cost(ax, ay, bx, by, px + 10000000000000, py + 10000000000000)
+            price2 += calc_cost(
+                ax, ay, bx, by, px + 10000000000000, py + 10000000000000
+            )
     return price1, price2
+
 
 def main():
     tracemalloc.start()
@@ -33,5 +38,9 @@ def main():
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
+
 main()

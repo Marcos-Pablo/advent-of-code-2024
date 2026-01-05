@@ -2,6 +2,7 @@ from pathlib import Path
 import time
 import tracemalloc
 
+
 class ChronoSpatialComputer:
     def __init__(self) -> None:
         self.current_instruction = 0
@@ -65,7 +66,7 @@ class ChronoSpatialComputer:
         self.register_a >>= self.get_combo_operand(operand)
 
     def bxl(self, operand):
-        self.register_b  ^= operand
+        self.register_b ^= operand
 
     def bst(self, operand):
         self.register_b = self.get_combo_operand(operand) & 0b111
@@ -95,6 +96,7 @@ class ChronoSpatialComputer:
         print(f"register B -> {self.register_b}")
         print(f"register C -> {self.register_c}")
 
+
 def simulate_program():
     a = 64196994
     b = 0
@@ -111,6 +113,7 @@ def simulate_program():
             break
     print(",".join(output))
 
+
 def simulate_example():
     a = 7
     output = []
@@ -122,10 +125,12 @@ def simulate_example():
     print(",".join(output))
     reverse_example()
 
+
 def reverse_example():
     a = 3
     for _ in range(4):
         a <<= 3
+
 
 def main():
     print("Processing input...")
@@ -135,7 +140,9 @@ def main():
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     start = time.perf_counter()
@@ -144,19 +151,24 @@ def main():
     current, peak = tracemalloc.get_traced_memory()
     print(f"Response part 1: {computer.get_output()}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     start = time.perf_counter()
-    
+
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Response part 2: ")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
-
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
 
     print("==================================")
     simulate_program()
     simulate_example()
+
+
 main()

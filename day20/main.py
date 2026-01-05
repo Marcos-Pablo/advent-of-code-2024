@@ -1,7 +1,8 @@
-from collections import defaultdict, deque
+from collections import defaultdict
 from pathlib import Path
 import time
 import tracemalloc
+
 
 def extract_map():
     script_dir = Path(__file__).parent
@@ -25,56 +26,49 @@ def extract_map():
             map.append(new_line)
     return map, start_pos, end_pos
 
+
 def print_map(map):
     # Calculate max width for each column
     col_widths = [max(len(str(row[i])) for row in map) for i in range(len(map[0]))]
     for line in map:
         print(" ".join(str(cell).ljust(col_widths[i]) for i, cell in enumerate(line)))
 
+
 def get_next_pos(map, i, j):
-    moves = [
-        (-1, 0),
-        (1, 0),
-        (0, -1),
-        (0, 1)
-    ]
+    moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
     for m1, m2 in moves:
         new_row, new_col = i + m1, j + m2
         if (
-            0 <= new_row < len(map) and
-            0 <= new_col < len(map[0]) and
-            (
-                map[new_row][new_col] == "." or 
-                map[new_row][new_col] == "E"
-            )
+            0 <= new_row < len(map)
+            and 0 <= new_col < len(map[0])
+            and (map[new_row][new_col] == "." or map[new_row][new_col] == "E")
         ):
             return (new_row, new_col)
 
     return None
 
+
 def get_shortcuts(map, i, j):
     shortcuts = []
-    moves = [
-        (-1, 0),
-        (1, 0),
-        (0, -1),
-        (0, 1)
-    ]
+    moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
     for m1, m2 in moves:
         cheat_start_row, cheat_start_col = i + m1, j + m2
         cheat_end_row, cheat_end_col = cheat_start_row + m1, cheat_start_col + m2
         if (
-            cheat_end_row < 0 or cheat_end_row >= len(map) or
-            cheat_end_col < 0 or cheat_end_col >= len(map[0]) or
-            map[cheat_start_row][cheat_start_col] != "#" or
-            map[cheat_end_row][cheat_end_col] == "#"
+            cheat_end_row < 0
+            or cheat_end_row >= len(map)
+            or cheat_end_col < 0
+            or cheat_end_col >= len(map[0])
+            or map[cheat_start_row][cheat_start_col] != "#"
+            or map[cheat_end_row][cheat_end_col] == "#"
         ):
             continue
 
         shortcuts.append((cheat_end_row, cheat_end_col))
     return shortcuts
+
 
 def calc_original_path(map, start_pos):
     original_path = []
@@ -88,15 +82,19 @@ def calc_original_path(map, start_pos):
         next_pos = get_next_pos(map, i, j)
     return original_path
 
+
 def calc_cheats(map, original_path):
-    cheats = defaultdict(lambda:0)
+    cheats = defaultdict(lambda: 0)
     for i, j in original_path:
         shortcuts = get_shortcuts(map, i, j)
         for cheat_end_row, cheat_end_col in shortcuts:
-            diff_in_picoseconds = int(map[cheat_end_row][cheat_end_col]) - int(map[i][j]) - 2
+            diff_in_picoseconds = (
+                int(map[cheat_end_row][cheat_end_col]) - int(map[i][j]) - 2
+            )
             if diff_in_picoseconds > 0:
                 cheats[diff_in_picoseconds] += 1
     return cheats
+
 
 def calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats):
     num_of_cheats_that_saves_at_least_100_picoseconds = 0
@@ -104,6 +102,7 @@ def calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats):
         if picoseconds_saved >= 100:
             num_of_cheats_that_saves_at_least_100_picoseconds += count
     return num_of_cheats_that_saves_at_least_100_picoseconds
+
 
 def main():
     print("Processing input...")
@@ -115,7 +114,9 @@ def main():
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     tracemalloc.start()
@@ -123,13 +124,19 @@ def main():
 
     original_path = calc_original_path(map, start_pos)
     cheats = calc_cheats(map, original_path)
-    num_of_cheats_that_saves_at_least_100_picoseconds = calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats)
+    num_of_cheats_that_saves_at_least_100_picoseconds = (
+        calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats)
+    )
+    print_map(map)
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Response part 1: {num_of_cheats_that_saves_at_least_100_picoseconds}")
     print(f"Response part 2: ")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
+
 
 main()

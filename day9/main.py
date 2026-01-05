@@ -3,6 +3,7 @@ import time
 import tracemalloc
 from data_structures.list_node import ListNode
 
+
 def extract_disk_map():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -33,11 +34,13 @@ def extract_disk_map():
             char = file.read(1)
     return disk_map, files, empty_spaces
 
+
 def get_next_empty_pos_left_to_right(disk_map, i):
     i += 1
     while i < len(disk_map) and disk_map[i] != ".":
         i += 1
     return i
+
 
 def get_next_non_empty_pos_right_to_left(disk_map, j):
     j -= 1
@@ -45,12 +48,14 @@ def get_next_non_empty_pos_right_to_left(disk_map, j):
         j -= 1
     return j
 
+
 def calculate_checksum(disk_map):
     checksum = 0
     for i in range(len(disk_map)):
         if disk_map[i] != ".":
             checksum += disk_map[i] * i
     return checksum
+
 
 def get_next_empty_space_by_size(empty_spaces, size):
     node = empty_spaces
@@ -67,6 +72,7 @@ def get_next_empty_space_by_size(empty_spaces, size):
         node = node.next
     return None
 
+
 def fragment_disk_strategy1(disk_map):
     i = get_next_empty_pos_left_to_right(disk_map, -1)
     j = get_next_non_empty_pos_right_to_left(disk_map, len(disk_map))
@@ -74,6 +80,7 @@ def fragment_disk_strategy1(disk_map):
         disk_map[i], disk_map[j] = disk_map[j], disk_map[i]
         i = get_next_empty_pos_left_to_right(disk_map, i)
         j = get_next_non_empty_pos_right_to_left(disk_map, j)
+
 
 def fragment_disk_strategy2(disk_map, files, empty_spaces):
     while files:
@@ -86,9 +93,11 @@ def fragment_disk_strategy2(disk_map, files, empty_spaces):
 
         empty_w_end = empty_w_start + size - 1
         if empty_w_end < start:
-            disk_map[empty_w_start:empty_w_end + 1], disk_map[start:end + 1] = (
-                disk_map[start:end + 1], disk_map[empty_w_start:empty_w_end + 1]
+            disk_map[empty_w_start : empty_w_end + 1], disk_map[start : end + 1] = (
+                disk_map[start : end + 1],
+                disk_map[empty_w_start : empty_w_end + 1],
             )
+
 
 def main():
     tracemalloc.start()
@@ -100,7 +109,9 @@ def main():
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     print("Solving part 1...")
@@ -111,7 +122,9 @@ def main():
     end = time.perf_counter()
     print(f"Part 1 response: {checksumstrategy1}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     print("Solving part 2...")
@@ -122,6 +135,9 @@ def main():
     end = time.perf_counter()
     print(f"Part 2 response: {checksumstrategy2}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()

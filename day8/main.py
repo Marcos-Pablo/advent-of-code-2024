@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 import tracemalloc
 
+
 def extract_antennas_and_size():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -19,7 +20,8 @@ def extract_antennas_and_size():
     n = row
     return antennas, n, m
 
-def get_anti_node_pos(x1, y1, x2, y2, multiplier = 1):
+
+def get_anti_node_pos(x1, y1, x2, y2, multiplier=1):
     diff_x, diff_y = abs(x1 - x2) * multiplier, abs(y1 - y2) * multiplier
     if x1 == x2:
         new_row = x1
@@ -36,6 +38,7 @@ def get_anti_node_pos(x1, y1, x2, y2, multiplier = 1):
         new_col = y1 + diff_y
     return new_row, new_col
 
+
 def count_anti_nodes_model1(anttenas, n, m):
     anti_nodes_positions = set()
     for positions in anttenas.values():
@@ -49,6 +52,7 @@ def count_anti_nodes_model1(anttenas, n, m):
                 if 0 <= new_row < n and 0 <= new_col < m:
                     anti_nodes_positions.add((new_row, new_col))
     return len(anti_nodes_positions)
+
 
 def count_anti_nodes_model2(anttenas, n, m):
     anti_nodes_positions = set()
@@ -69,10 +73,11 @@ def count_anti_nodes_model2(anttenas, n, m):
                     new_row, new_col = get_anti_node_pos(x1, y1, x2, y2, multiplier)
     return len(anti_nodes_positions)
 
+
 def main():
     start = time.perf_counter()
     tracemalloc.start()
-    
+
     antennas, n, m = extract_antennas_and_size()
     anti_nodes_count_model1 = count_anti_nodes_model1(antennas, n, m)
     anti_nodes_count_model2 = count_anti_nodes_model2(antennas, n, m)
@@ -84,6 +89,9 @@ def main():
     print(f"Part 1 response: {anti_nodes_count_model1}")
     print(f"Part 2 response: {anti_nodes_count_model2}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()

@@ -3,6 +3,7 @@ import time
 import tracemalloc
 import re
 
+
 def extract_input():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -12,6 +13,7 @@ def extract_input():
             x, y, vx, vy = map(int, re.findall(r"-?\d+", line))
             robots.append([x, y, vx, vy])
     return robots
+
 
 def solve(times, robots, width, height):
     min_safety_factor = float("inf")
@@ -33,6 +35,7 @@ def solve(times, robots, width, height):
 
     return safety_factor_after_100_seconds, number_of_seconds_to_draw_tree + 1
 
+
 def calc_safety_factor(robots, width, height):
     top_left_quadrant = 0
     top_right_quadrant = 0
@@ -51,7 +54,13 @@ def calc_safety_factor(robots, width, height):
             bottom_left_quadrant += 1
         else:
             bottom_right_quadrant += 1
-    return top_left_quadrant * top_right_quadrant * bottom_left_quadrant * bottom_right_quadrant
+    return (
+        top_left_quadrant
+        * top_right_quadrant
+        * bottom_left_quadrant
+        * bottom_right_quadrant
+    )
+
 
 def main():
     print("Processing input...")
@@ -66,17 +75,24 @@ def main():
     current, peak = tracemalloc.get_traced_memory()
 
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     start = time.perf_counter()
-    safety_factor_after_100_seconds, number_of_seconds_to_draw_tree = solve(times, robots, width, height)
+    safety_factor_after_100_seconds, number_of_seconds_to_draw_tree = solve(
+        times, robots, width, height
+    )
 
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Response part 1: {safety_factor_after_100_seconds}")
     print(f"Response part 2: {number_of_seconds_to_draw_tree}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()

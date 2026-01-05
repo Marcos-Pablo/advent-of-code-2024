@@ -2,6 +2,7 @@ from pathlib import Path
 import time
 import tracemalloc
 
+
 def extract_map_and_trailheads():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
@@ -17,9 +18,11 @@ def extract_map_and_trailheads():
                 map[-1].append(height)
     return map, trailheads
 
+
 def calc_scores(map, trailheads):
     moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
     n, m = len(map), len(map[0])
+
     def calc_score(i, j, visited):
         if map[i][j] == 9:
             score = 1 if (i, j) not in visited else 0
@@ -32,14 +35,15 @@ def calc_scores(map, trailheads):
         for m1, m2 in moves:
             new_row, new_col = i + m1, j + m2
             if (
-                0 <= new_row < n and 
-                0 <= new_col < m and
-                map[new_row][new_col] == height + 1
+                0 <= new_row < n
+                and 0 <= new_col < m
+                and map[new_row][new_col] == height + 1
             ):
                 score, rating = calc_score(new_row, new_col, visited)
                 total_score += score
                 total_rating += rating
         return total_score, total_rating
+
     total_score = 0
     total_rating = 0
     for i, j in trailheads:
@@ -47,6 +51,7 @@ def calc_scores(map, trailheads):
         total_score += score
         total_rating += rating
     return total_score, total_rating
+
 
 def main():
     tracemalloc.start()
@@ -57,7 +62,9 @@ def main():
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
     print("==================================")
 
     print("Solving part 1 and 2...")
@@ -68,6 +75,9 @@ def main():
     print(f"Part 1 response: {total_score}")
     print(f"Part 2 response: {total_rating}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB")
+    print(
+        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
+    )
+
 
 main()
