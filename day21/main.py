@@ -107,17 +107,10 @@ def find_min_moves_to_target(current, target, keyboard, inv_keyboard):
     row, col = keyboard[current]
     target_row, target_col = keyboard[target]
 
-    count_up = count_down = count_left = count_right = 0
-
-    if row > target_row:
-        count_up = row - target_row
-    elif row < target_row:
-        count_down = target_row - row
-
-    if col > target_col:
-        count_left = col - target_col
-    elif col < target_col:
-        count_right = target_col - col
+    count_up = max(0, row - target_row)
+    count_down = max(0, target_row - row)
+    count_left = max(0, col - target_col)
+    count_right = max(0, target_col - col)
 
     if count_left:
         if count_up:
