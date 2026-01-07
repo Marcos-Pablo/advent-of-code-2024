@@ -8,6 +8,9 @@ RIGHT = ">"
 LEFT = "<"
 CONFIRM = "A"
 
+STARTING_LEVEL_FIRST_PART = 3
+STARTING_LEVEL_SECOND_PART = 26
+
 num_keyboard = {
     "7": (0, 0),
     "8": (0, 1),
@@ -34,6 +37,7 @@ dir_keyboard = {
 }
 
 inv_dir_keyboard = {v: k for k, v in dir_keyboard.items()}
+cache = {}
 
 
 def extract_codes():
@@ -44,67 +48,27 @@ def extract_codes():
         return codes
 
 
-def find_min_moves_keyboard(code, keyboard, inv_keyboard, init_row, init_col):
-    new_code = []
-    row, col = init_row, init_col
-    for key in code:
-        target_row, target_col = keyboard[key]
-        count_up = count_down = count_left = count_right = 0
+def get_length(sequence, level, starting_level):
+    if level == 0:
+        return len(sequence)
 
-        if row > target_row:
-            count_up = row - target_row
-        elif row < target_row:
-            count_down = target_row - row
+    if (sequence, level) in cache:
+        return cache[(sequence, level)]
 
-        if col > target_col:
-            count_left = col - target_col
-        elif col < target_col:
-            count_right = target_col - col
+    keyboard, inv_keyboard = dir_keyboard, inv_dir_keyboard
+    if level == starting_level:
+        keyboard, inv_keyboard = num_keyboard, inv_num_keyboard
 
-        if count_left:
-            if count_up:
-                if (row, target_col) in inv_keyboard:
-                    new_code.append(LEFT * count_left)
-                    new_code.append(UP * count_up)
-                else:
-                    new_code.append(UP * count_up)
-                    new_code.append(LEFT * count_left)
-            elif count_down:
-                if (row, target_col) in inv_keyboard:
-                    new_code.append(LEFT * count_left)
-                    new_code.append(DOWN * count_down)
-                else:
-                    new_code.append(DOWN * count_down)
-                    new_code.append(LEFT * count_left)
-            else:
-                new_code.append(LEFT * count_left)
-
-        elif count_right:
-            if count_up:
-                if (target_row, col) in inv_keyboard:
-                    new_code.append(UP * count_up)
-                    new_code.append(RIGHT * count_right)
-                else:
-                    new_code.append(RIGHT * count_right)
-                    new_code.append(UP * count_up)
-            elif count_down:
-                if (target_row, col) in inv_keyboard:
-                    new_code.append(DOWN * count_down)
-                    new_code.append(RIGHT * count_right)
-                else:
-                    new_code.append(RIGHT * count_right)
-                    new_code.append(DOWN * count_down)
-            else:
-                new_code.append(RIGHT * count_right)
-
-        elif count_up:
-            new_code.append(UP * count_up)
-        elif count_down:
-            new_code.append(DOWN * count_down)
-
-        new_code.append(CONFIRM)
-        row, col = target_row, target_col
-    return "".join(new_code)
+    chunks = extract_chunks(sequence)
+    total_length = 0
+    for chunk in chunks:
+        current = CONFIRM
+        for ch in chunk:
+            subsequence = find_min_moves_to_target(current, ch, keyboard, inv_keyboard)
+            total_length += get_length(subsequence, level - 1, starting_level)
+            current = ch
+    cache[(sequence, level)] = total_length
+    return total_length
 
 
 def extract_number(code: str):
@@ -120,42 +84,111 @@ def extract_number(code: str):
     return int("".join(digits))
 
 
+def extract_chunks(code: str):
+    chunks = []
+    chunk = []
+    for i, c in enumerate(code):
+        chunk.append(c)
+
+        if c != CONFIRM:
+            continue
+
+        if i + 1 < len(code) and code[i + 1] == CONFIRM:
+            continue
+
+        chunks.append("".join(chunk))
+        chunk = []
+
+    return chunks
+
+
+def find_min_moves_to_target(current, target, keyboard, inv_keyboard):
+    new_code = []
+    row, col = keyboard[current]
+    target_row, target_col = keyboard[target]
+
+    count_up = count_down = count_left = count_right = 0
+
+    if row > target_row:
+        count_up = row - target_row
+    elif row < target_row:
+        count_down = target_row - row
+
+    if col > target_col:
+        count_left = col - target_col
+    elif col < target_col:
+        count_right = target_col - col
+
+    if count_left:
+        if count_up:
+            if (row, target_col) in inv_keyboard:
+                new_code.append(LEFT * count_left)
+                new_code.append(UP * count_up)
+            else:
+                new_code.append(UP * count_up)
+                new_code.append(LEFT * count_left)
+        elif count_down:
+            if (row, target_col) in inv_keyboard:
+                new_code.append(LEFT * count_left)
+                new_code.append(DOWN * count_down)
+            else:
+                new_code.append(DOWN * count_down)
+                new_code.append(LEFT * count_left)
+        else:
+            new_code.append(LEFT * count_left)
+
+    elif count_right:
+        if count_up:
+            if (target_row, col) in inv_keyboard:
+                new_code.append(UP * count_up)
+                new_code.append(RIGHT * count_right)
+            else:
+                new_code.append(RIGHT * count_right)
+                new_code.append(UP * count_up)
+        elif count_down:
+            if (target_row, col) in inv_keyboard:
+                new_code.append(DOWN * count_down)
+                new_code.append(RIGHT * count_right)
+            else:
+                new_code.append(RIGHT * count_right)
+                new_code.append(DOWN * count_down)
+        else:
+            new_code.append(RIGHT * count_right)
+
+    elif count_up:
+        new_code.append(UP * count_up)
+    elif count_down:
+        new_code.append(DOWN * count_down)
+
+    new_code.append(CONFIRM)
+    row, col = target_row, target_col
+    return "".join(new_code)
+
+
 def main():
     tracemalloc.start()
     start = time.perf_counter()
     print("Processing input...")
     codes = extract_codes()
     res1 = 0
+    res2 = 0
 
     for num_code in codes:
-        print()
-        print(f"Processing {num_code}")
-        first_dir_code = find_min_moves_keyboard(
-            num_code, num_keyboard, inv_num_keyboard, 3, 2
+        length_part_1 = get_length(
+            num_code, STARTING_LEVEL_FIRST_PART, STARTING_LEVEL_FIRST_PART
         )
-        print(f"First combination of moves= {first_dir_code}")
-
-        second_dir_code = find_min_moves_keyboard(
-            first_dir_code, dir_keyboard, inv_dir_keyboard, 0, 2
+        length_part_2 = get_length(
+            num_code, STARTING_LEVEL_SECOND_PART, STARTING_LEVEL_SECOND_PART
         )
-        print(f"Second combination of moves= {second_dir_code}")
-
-        third_dir_code = find_min_moves_keyboard(
-            second_dir_code, dir_keyboard, inv_dir_keyboard, 0, 2
-        )
-        print(f"Third combination of moves= {third_dir_code}")
-
         num = extract_number(num_code)
-        res = len(third_dir_code) * num
-        print(f"{len(third_dir_code)} * {num} = {res}")
-
-        res1 += res
+        res1 += length_part_1 * num
+        res2 += length_part_2 * num
 
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
 
     print(f"Response part 1: {res1}")
-    print(f"Response part 2: ")
+    print(f"Response part 2: {res2}")
 
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(
