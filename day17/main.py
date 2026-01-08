@@ -104,41 +104,46 @@ def simulate_program():
     output = []
     while True:
         b = (a & 7) ^ 1
-        c = (a >> b) & 7
-        b ^= 5
-        b ^= c
+        c = a >> b
+        b = (b ^ 5 ^ c) & 7
+        a >>= 3
         output.append(str(b))
-        a >>= 3
         if not a:
             break
-    print(",".join(output))
+    return ",".join(output)
 
 
-def simulate_example():
-    a = 7
-    output = []
-    while True:
-        a >>= 3
-        output.append(str(a & 7))
-        if not a:
-            break
-    print(",".join(output))
-    reverse_example()
+def step(a):
+    b = (a & 7) ^ 1
+    c = a >> b
+    out = (b ^ 5 ^ c) & 7
+    return out, a >> 3
 
 
-def reverse_example():
-    a = 3
-    for _ in range(4):
-        a <<= 3
+def reverse_engineer():
+    output = [2, 4, 1, 1, 7, 5, 1, 5, 4, 0, 0, 3, 5, 5, 3, 0]
+    candidates = {0}
+    while output:
+        new = set()
+        target = output.pop()
+        for a_next in candidates:
+            base = a_next << 3
+            for digit in range(8):
+                a = base | digit
+                out, nxt = step(a)
+                if out == target and nxt == a_next:
+                    new.add(a)
+        candidates = new
+    answer = min(candidates)
+    return answer
 
 
 def main():
-    print("Processing input...")
-    tracemalloc.start()
     start = time.perf_counter()
-    computer = ChronoSpatialComputer()
+    output1 = simulate_program()
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
+    print(f"Response part 1: {output1}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(
         f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
@@ -146,29 +151,16 @@ def main():
     print("==================================")
 
     start = time.perf_counter()
-    computer.execute_program()
+    output2 = reverse_engineer()
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
-    print(f"Response part 1: {computer.get_output()}")
-    print(f"Elapsed time: {end - start: .6f} second(s)")
-    print(
-        f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
-    )
-    print("==================================")
-
-    start = time.perf_counter()
-
-    end = time.perf_counter()
-    current, peak = tracemalloc.get_traced_memory()
-    print(f"Response part 2: ")
+    print(f"Response part 2: {output2}")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(
         f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
     )
 
     print("==================================")
-    simulate_program()
-    simulate_example()
 
 
 main()
