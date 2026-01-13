@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 import time
 import tracemalloc
@@ -28,7 +27,6 @@ def extract_map():
 
 
 def print_map(map):
-    # Calculate max width for each column
     col_widths = [max(len(str(row[i])) for row in map) for i in range(len(map[0]))]
     for line in map:
         print(" ".join(str(cell).ljust(col_widths[i]) for i, cell in enumerate(line)))
@@ -49,27 +47,6 @@ def get_next_pos(map, i, j):
     return None
 
 
-def get_shortcuts(map, i, j):
-    shortcuts = []
-    moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-    for m1, m2 in moves:
-        cheat_start_row, cheat_start_col = i + m1, j + m2
-        cheat_end_row, cheat_end_col = cheat_start_row + m1, cheat_start_col + m2
-        if (
-            cheat_end_row < 0
-            or cheat_end_row >= len(map)
-            or cheat_end_col < 0
-            or cheat_end_col >= len(map[0])
-            or map[cheat_start_row][cheat_start_col] != "#"
-            or map[cheat_end_row][cheat_end_col] == "#"
-        ):
-            continue
-
-        shortcuts.append((cheat_end_row, cheat_end_col))
-    return shortcuts
-
-
 def calc_original_path(map, start_pos):
     original_path = []
     picoseconds = 0
@@ -83,25 +60,36 @@ def calc_original_path(map, start_pos):
     return original_path
 
 
-def calc_cheats(map, original_path):
-    cheats = defaultdict(lambda: 0)
-    for i, j in original_path:
-        shortcuts = get_shortcuts(map, i, j)
-        for cheat_end_row, cheat_end_col in shortcuts:
-            diff_in_picoseconds = (
-                int(map[cheat_end_row][cheat_end_col]) - int(map[i][j]) - 2
-            )
-            if diff_in_picoseconds > 0:
-                cheats[diff_in_picoseconds] += 1
-    return cheats
+def calc_cheats(map, original_path, max_cheats=20, threshold=100):
+    count = 0
+    for init_row, init_col in original_path:
+        init_pogress = int(map[init_row][init_col])
+        for row_offset in range(-max_cheats, max_cheats + 1):
+            max_horizontal_offset = max_cheats - abs(row_offset)
+            end_row = init_row + row_offset
 
+            if end_row < 0 or end_row >= len(map):
+                continue
 
-def calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats):
-    num_of_cheats_that_saves_at_least_100_picoseconds = 0
-    for picoseconds_saved, count in cheats.items():
-        if picoseconds_saved >= 100:
-            num_of_cheats_that_saves_at_least_100_picoseconds += count
-    return num_of_cheats_that_saves_at_least_100_picoseconds
+            for col_offset in range(-max_horizontal_offset, max_horizontal_offset + 1):
+                end_col = init_col + col_offset
+                if end_col < 0 or end_col >= len(map[0]):
+                    continue
+
+                cheats = abs(row_offset) + abs(col_offset)
+                if cheats == 0:
+                    continue
+
+                end_pos = map[end_row][end_col]
+                if end_pos == "#":
+                    continue
+
+                final_progress = int(map[end_row][end_col])
+
+                saved = (final_progress - init_pogress) - cheats
+                if saved >= threshold:
+                    count += 1
+    return count
 
 
 def main():
@@ -123,15 +111,11 @@ def main():
     start = time.perf_counter()
 
     original_path = calc_original_path(map, start_pos)
-    cheats = calc_cheats(map, original_path)
-    num_of_cheats_that_saves_at_least_100_picoseconds = (
-        calc_num_of_cheats_that_saves_at_least_100_picoseconds(cheats)
-    )
-    print_map(map)
+    print(f"Response part 1: {calc_cheats(map, original_path, 2, 100)}")
+    print(f"Response part 2: {calc_cheats(map, original_path, 20, 100)}")
+
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
-    print(f"Response part 1: {num_of_cheats_that_saves_at_least_100_picoseconds}")
-    print(f"Response part 2: ")
     print(f"Elapsed time: {end - start: .6f} second(s)")
     print(
         f"Current memory usage: {current / 10**6:.6f} MB; Peak was {peak / 10**6:.6f} MB"
