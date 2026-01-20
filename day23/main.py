@@ -44,11 +44,13 @@ def find_maximal_clique(graph):
     vertices = sorted(graph.keys())
     store = []
 
-    def is_clique():
-        for i in range(len(store)):
-            for j in range(i + 1, len(store)):
-                if store[j] not in graph[store[i]]:
-                    return False
+    def is_clique(vertice):
+        for clique_vertice in store:
+            if (
+                vertice not in graph[clique_vertice]
+                or clique_vertice not in graph[vertice]
+            ):
+                return False
         return True
 
     def backtrack(start):
@@ -56,14 +58,15 @@ def find_maximal_clique(graph):
         nonlocal best_group
 
         for i in range(start, len(vertices)):
-            store.append(vertices[i])
+            vertice = vertices[i]
 
-            if is_clique():
+            if is_clique(vertice):
+                store.append(vertices[i])
                 if len(store) > best:
                     best = len(store)
                     best_group = store.copy()
                 backtrack(i + 1)
-            store.pop()
+                store.pop()
 
     backtrack(0)
 
