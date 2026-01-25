@@ -4,12 +4,11 @@ import time
 import tracemalloc
 
 
-def extract_wires_and_gates1():
+def extract_wires_and_gates():
     script_dir = Path(__file__).parent
     input_path = script_dir / "input.txt"
-    wires: dict[str, int | None] = defaultdict(lambda: None)
-    out_to_gate: dict[str, tuple | None] = defaultdict(lambda: None)
-    gate_lookup: dict[tuple, str | None] = defaultdict(lambda: None)
+    wires = {}
+    out_to_gate = {}
     gates = deque()
     with open(input_path.resolve(), "r") as file:
         initial_values, gate_lines = file.read().split("\n\n")
@@ -32,14 +31,13 @@ def extract_wires_and_gates1():
             )
 
             out_to_gate[output_wire] = (operator, wire_a, wire_b)
-            gate_lookup[(operator, frozenset({wire_a, wire_b}))] = output_wire
-        return wires, gates, out_to_gate, gate_lookup
+        return wires, gates, out_to_gate
 
 
 def process_instructions(wires, gates):
     while gates:
         gate = gates.popleft()
-        if wires[gate["wire_a"]] == None or wires[gate["wire_b"]] == None:
+        if wires.get(gate["wire_a"]) == None or wires.get(gate["wire_b"]) == None:
             gates.append(gate)
             continue
 
@@ -69,6 +67,47 @@ def extract_z_values(wires):
     return num
 
 
+def build_gate_lookup(out_to_gate):
+    gate_lookup = {}
+    for out, (op, a, b) in out_to_gate.items():
+        gate_lookup[(op, frozenset({a, b}))] = out
+    return gate_lookup
+
+
+def build_fanout(gate_lookup):
+    fanout = defaultdict(list)
+
+    for (op, inputs), out in gate_lookup.items():
+        a, b = tuple(inputs)
+        fanout[a].append((op, b, out))
+        fanout[b].append((op, a, out))
+
+    return fanout
+
+
+def find_partner_of_carry(fanout, carry_label):
+    """
+    For a given carry wire C, find a wire W such that:
+      C XOR W -> ...
+      C AND W -> ...
+    That W is the 'propagate partner' being used with the carry.
+    """
+    xor_partners = {}
+    and_partners = {}
+    for op, other, out in fanout.get(carry_label, []):
+        if op == "XOR":
+            xor_partners[other] = out
+        elif op == "AND":
+            and_partners[other] = out
+
+    # pick a wire that appears in BOTH XOR and AND with the carry
+    for w in xor_partners:
+        if w in and_partners:
+            return w, xor_partners[w], and_partners[w]
+
+    return None, None, None
+
+
 def find_swapped_wires(out_to_gate, gate_lookup):
     LEFT = 25
     swapped_wires = []
@@ -76,121 +115,127 @@ def find_swapped_wires(out_to_gate, gate_lookup):
     def p(label, value=""):
         print(f"{label:<{LEFT}}= {value}")
 
-    def is_xor_xy(w, i):
-        if w not in out_to_gate:
-            return False
-        op, a, b = out_to_gate[w]
-        return op == "XOR" and {a, b} == {f"x{i:02d}", f"y{i:02d}"}
+    def lookup(op, a, b):
+        return gate_lookup.get((op, frozenset({a, b})))
 
-    prev_t, prev_c = None, None
-    fanout = defaultdict(list)  # wire -> list of (op, other_wire, out_wire)
+    def rebuild_indices():
+        nonlocal gate_lookup, fanout
+        gate_lookup = build_gate_lookup(out_to_gate)
+        fanout = build_fanout(gate_lookup)
 
-    for (op, inputs), out in gate_lookup.items():
-        a, b = tuple(inputs)
-        fanout[a].append((op, b, out))
-        fanout[b].append((op, a, out))
+    fanout = build_fanout(gate_lookup)
 
-    for i in range(45):
+    carry_in = lookup("AND", "x00", "y00")
+    if carry_in is None:
+        raise ValueError("Couldn't find carry1 = AND(x00,y00).")
+
+    print()
+    z0 = out_to_gate["z00"]
+    p("z00", z0)
+
+    for i in range(1, 45):
         print()
         z_index = f"z{i:02d}"
         z = out_to_gate[z_index]
-
         p(z_index, z)
-        if i == 0:
-            continue
 
-        op, A, B = z[0], z[1], z[2]
+        t = lookup("XOR", f"x{i:02d}", f"y{i:02d}")
+        if t is None:
+            raise ValueError(f"Couldn't find t{i} = XOR(x{i:02d}, y{i:02d}).")
 
-        if is_xor_xy(A, i):
-            t_label, carry_label = A, B
-        elif is_xor_xy(B, i):
-            t_label, carry_label = B, A
+        expected_sum = lookup("XOR", t, carry_in)
+
+        if expected_sum is None:
+            p("!!!", f"missing gate: XOR({t}, {carry_in})")
+
+            used_t, used_sum_out, used_and_out = find_partner_of_carry(fanout, carry_in)
+
+            if used_t is None:
+                p("!!!", f"couldn't find XOR+AND partner for carry {carry_in}")
+                break
+
+            p(
+                "carry pairs with",
+                f"{used_t} (XOR-> {used_sum_out}, AND-> {used_and_out})",
+            )
+            p("expected t", t)
+
+            if used_t != t:
+                swapped_wires.extend([used_t, t])
+                out_to_gate[used_t], out_to_gate[t] = (
+                    out_to_gate[t],
+                    out_to_gate[used_t],
+                )
+                rebuild_indices()
+
+                t = lookup("XOR", f"x{i:02d}", f"y{i:02d}")
+                expected_sum = lookup("XOR", t, carry_in)
+                if expected_sum is None:
+                    p("!!!", "still missing XOR(t, carry) after swap; stopping")
+                    break
+            else:
+                p(
+                    "!!!",
+                    "unexpected: carry pairs with expected t but XOR key missing; stopping",
+                )
+                break
+
+        if expected_sum != z_index:
+            p("!!!", f"swap evidence: {z_index} should be {expected_sum}")
+            swapped_wires.extend([z_index, expected_sum])
+
+            out_to_gate[z_index], out_to_gate[expected_sum] = (
+                out_to_gate[expected_sum],
+                out_to_gate[z_index],
+            )
+            rebuild_indices()
+
+            z = out_to_gate[z_index]
+            p(f"{expected_sum} (was sum{i})", out_to_gate.get(expected_sum))
+            p(f"{z_index} (fixed)", z)
+
+        op, A, B = out_to_gate[z_index]
+        if op == "XOR" and (A == t or B == t):
+            carry_seen = B if A == t else A
+            p(f"{t} (t{i})", out_to_gate.get(t))
+            p(f"{carry_seen} (carry{i})", out_to_gate.get(carry_seen))
         else:
-            p("!!!", f"swap evidence: {z_index} isn't XOR(t{i}, carry{i})")
-            t_candidate_label = gate_lookup[
-                ("XOR", frozenset({f"x{i:02d}", f"y{i:02d}"}))
-            ]
-            t_candidate_wire = out_to_gate[t_candidate_label]
-            p(f"{t_candidate_label} (candidate t{i})", t_candidate_wire)
+            p("note", "z_i label fixed, but inputs don't display as (t, carry) cleanly")
 
-            c1 = gate_lookup[("AND", frozenset({f"x{i - 1:02d}", f"y{i - 1:02d}"}))]
-            c2 = gate_lookup.get(("AND", frozenset({prev_t, prev_c})))
+        g = lookup("AND", f"x{i:02d}", f"y{i:02d}")
+        if g is None:
+            raise ValueError(f"Couldn't find g{i} = AND(x{i:02d}, y{i:02d}).")
 
-            if c2 is None:
-                p(
-                    "!!!",
-                    f"can't find AND(prev_t, prev_c) at bit {i}; prev labels likely swapped upstream",
+        p_term = lookup("AND", t, carry_in)
+        if p_term is None:
+            p("!!!", f"missing gate: AND({t}, {carry_in})")
+
+            used_t, used_sum_out, used_and_out = find_partner_of_carry(fanout, carry_in)
+            if used_t is not None and used_t != t:
+                swapped_wires.extend([used_t, t])
+                out_to_gate[used_t], out_to_gate[t] = (
+                    out_to_gate[t],
+                    out_to_gate[used_t],
                 )
+                rebuild_indices()
 
-            candidate_carry_label = gate_lookup[("OR", frozenset({c1, c2}))]
-            candidate_carry_wire = out_to_gate[candidate_carry_label]
-            p(f"{candidate_carry_label} (candidate carry{i})", candidate_carry_wire)
+                t = lookup("XOR", f"x{i:02d}", f"y{i:02d}")
+                p_term = lookup("AND", t, carry_in)
 
-            if candidate_carry_wire and candidate_carry_wire[0] != "AND":
-                c1 = out_to_gate.get(candidate_carry_wire[1])
-                c2 = out_to_gate.get(candidate_carry_wire[2])
-                p(f"{candidate_carry_wire[1]}", c1)
-                p(f"{candidate_carry_wire[2]}", c2)
+            if p_term is None:
+                p("!!!", "still missing AND(t, carry); stopping")
+                break
 
-            key = ("XOR", frozenset({t_candidate_label, candidate_carry_label}))
-            actual_z_label = gate_lookup.get(key)
-            if actual_z_label is None and z_index == "z39":
-                p(
-                    "!!!",
-                    f"missing gate: XOR({t_candidate_label}, {candidate_carry_label})",
-                )
-                p("bng", out_to_gate["bng"])
-                p("vbm", out_to_gate["vbm"])
-                print()
-                for op, other, out in fanout["fjp"]:
-                    print(
-                        "fjp",
-                        op,
-                        other,
-                        "->",
-                        out,
-                        " | other gate:",
-                        out_to_gate.get(other),
-                    )
+        carry_out = lookup("OR", g, p_term)
+        if carry_out is None:
+            p("!!!", f"missing gate: OR({g}, {p_term}); stopping")
+            break
 
-                for op, other, out in fanout["hsf"]:
-                    if op in ("XOR", "AND"):
-                        print(
-                            "hsf",
-                            op,
-                            other,
-                            "->",
-                            out,
-                            " other=",
-                            out_to_gate.get(other),
-                        )
+        carry_in = carry_out
 
-                swapped_wires.append("fjp")
-                swapped_wires.append("bng")
-
-                continue
-
-            actual_z_wire = out_to_gate[actual_z_label]
-            swapped_wires.append(z_index)
-            swapped_wires.append(actual_z_label)
-
-            p(f"{actual_z_label} (original z{i:02}) ", actual_z_wire)
-            continue
-
-        prev_t = t_label
-        prev_c = carry_label
-        t_wire = out_to_gate.get(t_label)
-        carry_wire = out_to_gate.get(carry_label)
-
-        p(f"{t_label} (t{i})", t_wire)
-        p(f"{carry_label} (carry{i})", carry_wire)
-
-        if carry_wire and carry_wire[0] != "AND":
-            c1 = out_to_gate.get(carry_wire[1])
-            c2 = out_to_gate.get(carry_wire[2])
-            p(f"{carry_wire[1]}", c1)
-            p(f"{carry_wire[2]}", c2)
     print()
+    p("z45", out_to_gate.get("z45"))
+
     return ",".join(sorted(swapped_wires))
 
 
@@ -199,7 +244,8 @@ def main():
     tracemalloc.start()
     start = time.perf_counter()
 
-    wires, gates, out_to_gate, gate_lookup = extract_wires_and_gates1()
+    wires, gates, out_to_gate = extract_wires_and_gates()
+    gate_lookup = build_gate_lookup(out_to_gate)
 
     end = time.perf_counter()
     current, peak = tracemalloc.get_traced_memory()
